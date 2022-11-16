@@ -31,16 +31,15 @@ def get_title_of_pdf(pdf):
     else:
         return unclean_title
 
-def get_tables_from_pdf(pdf, regions, page):
-    if page == 2: regions = [30, 581, 24, 36]
-    return tabula.io.read_pdf(pdf, area=regions, pages=page, stream=True, multiple_tables=False, format='JSON', output_path='1.json')
+def get_name_folder(data):
 
-def extract_data_from_tables(pdf):
-    format_code = identify_format(get_title_of_pdf(pdf))
-    regions = [30, 581, 12, 24]
-    print(get_tables_from_pdf(pdf, regions, 2))
-    print(get_tables_from_pdf(pdf, regions, 3))
-    
+    for line in data[0]:
+        if line.startswith('Nombre') and ':' in line:
+            nombre = line.split(': ')[1]
+        if line.startswith('RUT') and ':' in line:
+            rut = line.split(': ')[1]
+        
+    return nombre, rut
 
 
 def extract_raw_data(pdf):
@@ -58,6 +57,7 @@ def extract_raw_data(pdf):
 
 def parse_table_data_f1(data):
     table_data = []
+    name, rut = get_name_folder(data)
     for num, page in enumerate(data):
 
         tw_separator = False
@@ -75,7 +75,7 @@ def parse_table_data_f1(data):
                 code = line_data[0]
                 description = ' '.join(line_data[1:-1])
                 value = line_data[-1]
-                table_data.append([code, description, value, month, quota, (num + 1)])
+                table_data.append([code, name, rut, description, value, month, quota, (num + 1)])
             if line == 'Código Glosa Valor':
                 tw_separator = True
         
@@ -83,8 +83,19 @@ def parse_table_data_f1(data):
 
     return table_data
 
+def parse_table_data_f2(data):
+    for num, page in enumerate(data):
+        print(f'||||||[{num + 1}]||||||')
+        for line in page:
+            print(line)
 
-data = parse_table_data_f1(extract_raw_data('files/3.pdf'))
-for line in data:
-    if re.match('\d', line[0]):
-        print(line)
+
+
+#get_name_folder(extract_raw_data('files/4.pdf'))
+
+data = parse_table_data_f1(extract_raw_data('files/2.pdf'))
+
+final_extracted_data = [line for line in data if re.match('\d', line[0]) and not re.match('/', line[0])]
+
+for line in final_extracted_data:
+    print(line)
