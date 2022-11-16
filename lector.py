@@ -2,6 +2,7 @@ import tabula
 from PyPDF2 import PdfReader
 import pandas as pd
 import os
+import re
 
 
 def identify_format(title):
@@ -44,11 +45,46 @@ def extract_data_from_tables(pdf):
 
 def extract_raw_data(pdf):
     reader = PdfReader(pdf)
+    data = []
 
     for page_num, page in enumerate(reader.pages):
 
         text = page.extract_text()
-        print(f'|||||||||{page_num}|||||||||')
-        print(text.split('\n'))
+        data.append(text.split('\n'))
 
-extract_raw_data('files/1.pdf')
+    return data
+        
+
+
+def parse_table_data_f1(data):
+    table_data = []
+    for num, page in enumerate(data):
+
+        tw_separator = False
+
+        if num == 1:
+            label = page[1]
+        else:
+            label = page[0]
+
+        month, quota = ' '.join(label.split(' ')[0:2]), ''.join(label.split(' ')[2:])
+
+        for line in page:
+            if tw_separator:
+                line_data = line.split(' ')
+                code = line_data[0]
+                description = ' '.join(line_data[1:-1])
+                value = line_data[-1]
+                table_data.append([code, description, value, month, quota, (num + 1)])
+            if line == 'Código Glosa Valor':
+                tw_separator = True
+        
+            
+
+    return table_data
+
+
+data = parse_table_data_f1(extract_raw_data('files/3.pdf'))
+for line in data:
+    if re.match('\d', line[0]):
+        print(line)
