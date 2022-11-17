@@ -43,7 +43,7 @@ def get_name_folder(data):
 
 
 def extract_raw_data(pdf):
-    reader = PdfReader(pdf)
+    reader = PdfReader(pdf, strict=True)
     data = []
 
     for page_num, page in enumerate(reader.pages):
@@ -55,7 +55,7 @@ def extract_raw_data(pdf):
         
 
 
-def parse_table_data_f1(data):
+def parse_table_data_monthly(data):
     table_data = []
     name, rut = get_name_folder(data)
     for num, page in enumerate(data):
@@ -78,24 +78,32 @@ def parse_table_data_f1(data):
                 table_data.append([code, name, rut, description, value, month, quota, (num + 1)])
             if line == 'Código Glosa Valor':
                 tw_separator = True
-        
-            
+    
+    parse_table_data_yearly(data, table_data[-1][-1] + 1)        
 
     return table_data
 
-def parse_table_data_f2(data):
-    for num, page in enumerate(data):
-        print(f'||||||[{num + 1}]||||||')
-        for line in page:
-            print(line)
+def parse_table_data_yearly(data, start = 0):
+    for i in range(start,len(data)):
+        #Iterating through each page of the pdf as an array
+        if data[i][0] == 'Declaraciones de Renta (F22)': data[i][0] = data[i][1]
+        if 'Año' in data[i][0]:
+            print(data[i][0])
+            
+    
+        
 
 
 
-#get_name_folder(extract_raw_data('files/4.pdf'))
 
-data = parse_table_data_f1(extract_raw_data('files/2.pdf'))
+#Works
 
+data = parse_table_data_monthly(extract_raw_data('files/2.pdf'))
 final_extracted_data = [line for line in data if re.match('\d', line[0]) and not re.match('/', line[0])]
+#for line in final_extracted_data:
+#    print(line)
 
-for line in final_extracted_data:
-    print(line)
+#data = parse_table_data_yearly(extract_raw_data('files/4.pdf'))
+
+
+
