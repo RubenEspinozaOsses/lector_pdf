@@ -60,7 +60,7 @@ def extract_raw_data(pdf):
 
 
 def parse_table_data_monthly(data):
-    'Monthly data from a yearly table into a readable array'
+    'Parses monthly data from a monthly table into a readable array'
     table_data = []
     name, rut = get_name_folder(data)
     for num, page in enumerate(data):
@@ -84,7 +84,7 @@ def parse_table_data_monthly(data):
             if line == 'Código Glosa Valor':
                 tw_separator = True
     
-    parse_table_data_yearly(data, table_data[-1][-1] + 1)        
+    parse_table_data_yearly(data, table_data[-1][-1])        
 
     return table_data
 
@@ -98,14 +98,22 @@ def parse_table_data_yearly(data, start = 0):
         #cod 55 = correo electronico
         print(f'|||Pagina {i + 1}|||')
         tw_separator = False
+        if i == start: i += 1
         for line in data[i]:
-            print(line)
-            if tw_separator:
-                year = line[-4:]
-
-                tw_separator = False
-            if 'AÑO TRIBUTARIO' in line:
-                tw_separator = True
+            #print(line)
+            #['MENSUAL', code, name, rut, description, value, month, quota, (num + 1)]
+            year = data[i][1][:19] if i + 1 == 2 else data[i][0][:19]
+            quota = data[i][1][20:] if i + 1 == 2 else data[i][0][20:]
+            label = 'ANUAL'
+            code = None
+            print([char for char in line if char == '\d'])
+            description = None
+            value = None
+            page = i
+            #data = [label, code, name, rut, description, value, year, quota, page]
+            #print(line)
+            
+            
             
             
     
