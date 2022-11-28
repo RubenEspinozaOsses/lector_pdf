@@ -1,9 +1,11 @@
+#!env/Scripts python
 import tabula
 from PyPDF2 import PdfReader
 import pandas as pd
 import os
 import re
 import json
+import time
 
 
 def identify_format(title):
@@ -77,41 +79,47 @@ def parse_table_data_monthly(data):
         for line in page:
             if tw_separator:
                 line_data = line.split(' ')
-                code = line_data[0]
-                description = ' '.join(line_data[1:-1])
+                code = ''.join([char for char in line_data[0] if char.isdigit()])
+                extra = [char for char in line_data[0] if not char.isdigit()]
+                description = ''.join(extra) + ' '.join(line_data[1:-1])
                 value = line_data[-1]
                 table_data.append(['MENSUAL', code, name, rut, description, value, month, quota, (num + 1)])
             if line == 'Código Glosa Valor':
                 tw_separator = True
     
-    parse_table_data_yearly(data, table_data[-1][-1])        
+    to_append = parse_table_data_yearly(data, table_data[-1][-1])
+    for el in to_append:
+        table_data.append(el)
 
     return table_data
+
+
+
 
 def parse_table_data_yearly(data, start = 0):
     'Parses data from a yearly table into a readable array'
     name, rut = get_name_folder(data)
     table_data = []
     for i in range(start,len(data)):
-        #Iterating through each page of the pdf as an array
-        #if data[i][0] == 'Declaraciones de Renta (F22)': data[i][0] = data[i][1]
-        #cod 55 = correo electronico
-        print(f'|||Pagina {i + 1}|||')
-        tw_separator = False
-        if i == start: i += 1
-        for line in data[i]:
-            #print(line)
-            #['MENSUAL', code, name, rut, description, value, month, quota, (num + 1)]
-            year = data[i][1][:19] if i + 1 == 2 else data[i][0][:19]
-            quota = data[i][1][20:] if i + 1 == 2 else data[i][0][20:]
-            label = 'ANUAL'
-            code = None
-            print([char for char in line if char == '\d'])
-            description = None
-            value = None
-            page = i
-            #data = [label, code, name, rut, description, value, year, quota, page]
-            #print(line)
+        for index,line in enumerate(data[i]):
+            if line[0].isdigit():
+                year = data[i][1][:19] if i + 1 == 2 else data[i][0][:19]
+                quota = data[i][1][20:] if i + 1 == 2 else data[i][0][20:]
+                label = 'ANUAL'
+                page = i
+                
+                multiple_lines = [data[i][index]]
+                
+                m_idx = index
+                while m_idx + 1 != len(data[i]) and not data[i][m_idx + 1][0].isdigit():
+                    multiple_lines.append(data[i][m_idx + 1])
+                    m_idx += 1
+                description = ''.join(multiple_lines)
+                to_return = [label, description, name, rut, year, quota, page]
+                table_data.append(to_return)
+    return table_data
+    
+
             
             
             
@@ -119,33 +127,36 @@ def parse_table_data_yearly(data, start = 0):
     
         
 def process_folders():
-    files = [file for file in os.listdir(os.path.dirname('files/por_procesar')) if file.endswith('.pdf')]
+    files = [file for file in os.listdir('files/por_procesar') if file.endswith('.pdf')]
     processed = []
-
+    
     for file in files:
-        if identify_format(get_title_of_pdf(file)) != 3:
-            processed.append(parse_table_data_monthly(extract_raw_data(file)))
+        archivo_pdf = f'files/por_procesar/{file}'
+        if identify_format(get_title_of_pdf(archivo_pdf)) != 3:
+            processed.append(parse_table_data_monthly(extract_raw_data(archivo_pdf)))
         else:
-            processed.append(parse_table_data_yearly(extract_raw_data(file)))
+            processed.append(parse_table_data_yearly(extract_raw_data(archivo_pdf)))
 
     
     return json.dumps(processed)
 
+def append_new_data(new_data, old_data):
+    for data in new_data:
+        old_data.append(data)
+    return old_data
 
 def append_processed_data(new_json):
-    with open('files/procesado/out.json', 'a') as out:
+    moment=time.strftime("%Y-%b-%d__%H_%M_%S",time.localtime())
+    with open(f'files/procesado/{moment}.json', 'w+') as out:
         out.write(new_json)
+        
 
 
 
-#Works
+#print(parse_table_data_monthly(extract_raw_data('files/por_procesar/1.pdf')))
+append_processed_data(process_folders())
+print('Finished')
 
-#data = parse_table_data_monthly(extract_raw_data('files/2.pdf'))
-#final_extracted_data = [line for line in data if re.match('\d', line[0]) and not re.match('/', line[0])]
-#for line in final_extracted_data:
-#    print(line)
-
-data = parse_table_data_yearly(extract_raw_data('files/por_procesar/4.pdf'))
 
 
 
