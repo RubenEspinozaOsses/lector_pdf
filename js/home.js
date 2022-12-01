@@ -8,3 +8,32 @@ function checkIfPdf(){
     }
     
 }
+
+function mostrarTodo(){
+    let tds = document.querySelectorAll('td')
+    for(let td of tds){
+        td.classList.remove('is-hidden')
+    }
+}
+
+function buscar(){
+    return
+    let search = document.getElementById('search').value
+    if (search.length < 4){
+        return
+    }
+
+    if (search == '') {
+        mostrarTodo();
+        return
+    }
+    let tds = document.querySelectorAll('tr')
+
+    for(let td of tds){
+        if (!td.innerText.includes(search)){
+            td.classList.add('is-hidden')
+        }
+    }
+
+    console.log(td)
+}

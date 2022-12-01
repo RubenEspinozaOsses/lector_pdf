@@ -121,7 +121,24 @@ def parse_table_data_yearly(data, start = 0):
     
 
             
-            
+def find_codes(data):
+    lines_wcodes = []
+    codes = ['529', '538', '020', '142', '732', '715', '587', '720']
+
+
+    for page in data:
+        for line in page:
+            found_codes = []
+            for code in codes:
+                if code == line.split(' ')[0]:
+                    if code not in found_codes:
+                        found_codes.append(code)
+                    
+                    print(line)
+
+def execute(pdf):
+    pdf_as_data = extract_raw_data(pdf)
+    list_wcodes = find_codes(pdf_as_data)
             
             
     
@@ -154,9 +171,9 @@ def append_processed_data(new_json):
 
 
 #print(parse_table_data_monthly(extract_raw_data('files/por_procesar/1.pdf')))
-append_processed_data(process_folders())
+#append_processed_data(process_folders())
 print('Finished')
-
+execute('files/por_procesar/3.pdf')
 
 
 
