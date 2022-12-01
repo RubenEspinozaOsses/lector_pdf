@@ -149,7 +149,15 @@ def recopilar_datos_carpeta(pdf):
     pdf_as_data = extract_raw_data(pdf)
     nombre_empresario = obtener_datos_identificadores(pdf_as_data[0], 'Nombre del emisor')
     rut_empresario = obtener_datos_identificadores(pdf_as_data[0], 'RUT del emisor')
-    return encontrar_datos_codigos(pdf_as_data), {'nombre empresario': nombre_empresario, 'rut empresario': rut_empresario}
+
+    
+    if identify_format(get_title_of_pdf(pdf)) != 3:
+        datos_codigo = encontrar_datos_codigos(pdf_as_data)
+    else:
+        datos_codigo = []
+
+    datos_contribuyente = {'nombre empresario': nombre_empresario, 'rut empresario': rut_empresario}
+    return  datos_codigo, datos_contribuyente
 
 
 #            
@@ -186,7 +194,7 @@ def recopilar_datos_carpeta(pdf):
 #print(parse_table_data_monthly(extract_raw_data('files/por_procesar/1.pdf')))
 #append_processed_data(process_folders())
 print('Finished')
-print(recopilar_datos_carpeta('files/por_procesar/1.pdf'))
+print(recopilar_datos_carpeta('files/por_procesar/4.pdf'))
 
 
 
